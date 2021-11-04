@@ -1,6 +1,10 @@
 package main
 
-import libconfig "github.com/opensourceways/community-robot-lib/config"
+import (
+	"fmt"
+
+	libconfig "github.com/opensourceways/community-robot-lib/config"
+)
 
 type configuration struct {
 	ConfigItems []botConfig `json:"config_items,omitempty"`
@@ -50,11 +54,16 @@ func (c *configuration) SetDefault() {
 
 type botConfig struct {
 	libconfig.PluginForRepo
+	CommunityName string `json:"community_name"`
+	CommandLink   string `json:"command_link"`
 }
 
 func (c *botConfig) setDefault() {
 }
 
 func (c *botConfig) validate() error {
+	if c.CommunityName == "" || c.CommandLink == "" {
+		return fmt.Errorf("the community_name or command_link configuration can not be empty")
+	}
 	return c.PluginForRepo.Validate()
 }
