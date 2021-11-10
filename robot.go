@@ -44,7 +44,7 @@ func (bot *robot) getConfig(cfg libconfig.PluginConfig, org, repo string) (*botC
 	if bc := c.configFor(org, repo); bc != nil {
 		return bc, nil
 	}
-	return nil, fmt.Errorf("no %s robot config for this repo:%s/%s", botName, org, repo)
+	return nil, fmt.Errorf("no config for this repo:%s/%s", org, repo)
 }
 
 func (bot *robot) RegisterEventHandler(p libplugin.HandlerRegitster) {
