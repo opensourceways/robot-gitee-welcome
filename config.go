@@ -54,16 +54,19 @@ func (c *configuration) SetDefault() {
 
 type botConfig struct {
 	libconfig.PluginForRepo
-	CommunityName string `json:"community_name"`
-	CommandLink   string `json:"command_link"`
+	CommunityName string `json:"community_name" required:"true"`
+	CommandLink   string `json:"command_link" required:"true"`
 }
 
 func (c *botConfig) setDefault() {
 }
 
 func (c *botConfig) validate() error {
-	if c.CommunityName == "" || c.CommandLink == "" {
-		return fmt.Errorf("the community_name or command_link configuration can not be empty")
+	if c.CommunityName == "" {
+		return fmt.Errorf("the community_name configuration can not be empty")
+	}
+	if c.CommandLink == "" {
+		return fmt.Errorf("the  command_link configuration can not be empty")
 	}
 	return c.PluginForRepo.Validate()
 }

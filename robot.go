@@ -52,19 +52,19 @@ func (bot *robot) RegisterEventHandler(p libplugin.HandlerRegitster) {
 	p.RegisterPullRequestHandler(bot.handlePREvent)
 }
 
-func (bot *robot) handlePREvent(e *sdk.PullRequestEvent, cfg libconfig.PluginConfig, log *logrus.Entry) error {
+func (bot *robot) handlePREvent(e *sdk.PullRequestEvent, pc libconfig.PluginConfig, log *logrus.Entry) error {
 	action := giteeclient.GetPullRequestAction(e)
 	if action != giteeclient.PRActionOpened {
 		return nil
 	}
 
 	prInfo := giteeclient.GetPRInfoByPREvent(e)
-	botConfig, err := bot.getConfig(cfg, prInfo.Org, prInfo.Repo)
-	if err == nil {
+	cfg, err := bot.getConfig(pc, prInfo.Org, prInfo.Repo)
+	if err != nil {
 		return err
 	}
 
-	comment, err := bot.genWelcomeMessage(prInfo.Author, botConfig)
+	comment, err := bot.genWelcomeMessage(prInfo.Author, cfg)
 	if err != nil {
 		return err
 	}
@@ -72,20 +72,21 @@ func (bot *robot) handlePREvent(e *sdk.PullRequestEvent, cfg libconfig.PluginCon
 	return bot.cli.CreatePRComment(prInfo.Org, prInfo.Repo, prInfo.Number, comment)
 }
 
-func (bot *robot) handleIssueEvent(e *sdk.IssueEvent, cfg libconfig.PluginConfig, log *logrus.Entry) error {
-	if giteeclient.StatusOpen != *e.Action {
+func (bot *robot) handleIssueEvent(e *sdk.IssueEvent, pc libconfig.PluginConfig, log *logrus.Entry) error {
+	ew := giteeclient.NewIssueEventWrapper(e)
+	if giteeclient.StatusOpen != ew.GetAction() {
 		return nil
 	}
 
-	org, repo := giteeclient.GetOwnerAndRepoByIssueEvent(e)
-	bCfg, err := bot.getConfig(cfg, org, repo)
-	if err == nil {
+	org, repo := ew.GetOrgRep()
+	cfg, err := bot.getConfig(pc, org, repo)
+	if err != nil {
 		return err
 	}
 
-	author := e.Issue.User.Login
-	number := e.Issue.Number
-	comment, err := bot.genWelcomeMessage(author, bCfg)
+	author := ew.GetIssueAuthor()
+	number := ew.GetIssueNumber()
+	comment, err := bot.genWelcomeMessage(author, cfg)
 	if err != nil {
 		return err
 	}
@@ -93,10 +94,10 @@ func (bot *robot) handleIssueEvent(e *sdk.IssueEvent, cfg libconfig.PluginConfig
 	return bot.cli.CreateIssueComment(org, repo, number, comment)
 }
 
-func (bot robot) genWelcomeMessage(author string, bCfg *botConfig) (string, error) {
+func (bot robot) genWelcomeMessage(author string, cfg *botConfig) (string, error) {
 	b, err := bot.cli.GetBot()
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf(welcomeMessage, author, bCfg.CommunityName, bCfg.CommunityName, b.Login, bCfg.CommandLink), nil
+	return fmt.Sprintf(welcomeMessage, author, cfg.CommunityName, cfg.CommunityName, b.Login, cfg.CommandLink), nil
 }
