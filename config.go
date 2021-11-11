@@ -66,7 +66,7 @@ func (c *botConfig) validate() error {
 		return fmt.Errorf("the community_name configuration can not be empty")
 	}
 	if c.CommandLink == "" {
-		return fmt.Errorf("the  command_link configuration can not be empty")
+		return fmt.Errorf("the command_link configuration can not be empty")
 	}
 	return c.PluginForRepo.Validate()
 }
