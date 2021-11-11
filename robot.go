@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/opensourceways/community-robot-lib/giteeclient"
 
 	sdk "gitee.com/openeuler/go-gitee/gitee"
 	libconfig "github.com/opensourceways/community-robot-lib/config"
+	"github.com/opensourceways/community-robot-lib/giteeclient"
 	libplugin "github.com/opensourceways/community-robot-lib/giteeplugin"
 	"github.com/sirupsen/logrus"
 )
