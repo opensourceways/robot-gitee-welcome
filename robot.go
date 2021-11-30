@@ -15,7 +15,7 @@ const botName = "welcome"
 const welcomeMessage = `Hey ***@%s***, Welcome to %s Community.
 All of the projects in %s Community are maintained by ***@%s***.
 That means the developers can comment below every pull request or issue to trigger Bot Commands.
-Please follow instructions at <%s> to find the details.
+Please follow instructions at **[Here](%s)** to find the details.
 `
 
 type iClient interface {
