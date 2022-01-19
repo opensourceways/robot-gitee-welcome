@@ -3,10 +3,9 @@ package main
 import (
 	"fmt"
 
-	sdk "gitee.com/openeuler/go-gitee/gitee"
-	libconfig "github.com/opensourceways/community-robot-lib/config"
-	"github.com/opensourceways/community-robot-lib/giteeclient"
-	libplugin "github.com/opensourceways/community-robot-lib/giteeplugin"
+	"github.com/opensourceways/community-robot-lib/config"
+	framework "github.com/opensourceways/community-robot-lib/robot-gitee-framework"
+	sdk "github.com/opensourceways/go-gitee/gitee"
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,11 +31,11 @@ type robot struct {
 	cli iClient
 }
 
-func (bot *robot) NewPluginConfig() libconfig.PluginConfig {
+func (bot *robot) NewConfig() config.Config {
 	return &configuration{}
 }
 
-func (bot *robot) getConfig(cfg libconfig.PluginConfig, org, repo string) (*botConfig, error) {
+func (bot *robot) getConfig(cfg config.Config, org, repo string) (*botConfig, error) {
 	c, ok := cfg.(*configuration)
 	if !ok {
 		return nil, fmt.Errorf("can't convert to configuration")
@@ -44,54 +43,52 @@ func (bot *robot) getConfig(cfg libconfig.PluginConfig, org, repo string) (*botC
 	if bc := c.configFor(org, repo); bc != nil {
 		return bc, nil
 	}
+
 	return nil, fmt.Errorf("no config for this repo:%s/%s", org, repo)
 }
 
-func (bot *robot) RegisterEventHandler(p libplugin.HandlerRegitster) {
+func (bot *robot) RegisterEventHandler(p framework.HandlerRegitster) {
 	p.RegisterIssueHandler(bot.handleIssueEvent)
 	p.RegisterPullRequestHandler(bot.handlePREvent)
 }
 
-func (bot *robot) handlePREvent(e *sdk.PullRequestEvent, pc libconfig.PluginConfig, log *logrus.Entry) error {
-	action := giteeclient.GetPullRequestAction(e)
-	if action != giteeclient.PRActionOpened {
+func (bot *robot) handlePREvent(e *sdk.PullRequestEvent, c config.Config, log *logrus.Entry) error {
+	if sdk.GetPullRequestAction(e) != sdk.PRActionOpened {
 		return nil
 	}
 
-	prInfo := giteeclient.GetPRInfoByPREvent(e)
-	cfg, err := bot.getConfig(pc, prInfo.Org, prInfo.Repo)
+	org, repo := e.GetOrgRepo()
+	cfg, err := bot.getConfig(c, org, repo)
 	if err != nil {
 		return err
 	}
 
-	comment, err := bot.genWelcomeMessage(prInfo.Author, cfg)
+	comment, err := bot.genWelcomeMessage(e.GetPRAuthor(), cfg)
 	if err != nil {
 		return err
 	}
 
-	return bot.cli.CreatePRComment(prInfo.Org, prInfo.Repo, prInfo.Number, comment)
+	return bot.cli.CreatePRComment(org, repo, e.GetPRNumber(), comment)
 }
 
-func (bot *robot) handleIssueEvent(e *sdk.IssueEvent, pc libconfig.PluginConfig, log *logrus.Entry) error {
-	ew := giteeclient.NewIssueEventWrapper(e)
-	if giteeclient.StatusOpen != ew.GetAction() {
+func (bot *robot) handleIssueEvent(e *sdk.IssueEvent, c config.Config, log *logrus.Entry) error {
+	if sdk.StatusOpen != e.GetAction() {
 		return nil
 	}
 
-	org, repo := ew.GetOrgRep()
-	cfg, err := bot.getConfig(pc, org, repo)
+	org, repo := e.GetOrgRepo()
+	cfg, err := bot.getConfig(c, org, repo)
 	if err != nil {
 		return err
 	}
 
-	author := ew.GetIssueAuthor()
-	number := ew.GetIssueNumber()
+	author := e.GetIssueAuthor()
 	comment, err := bot.genWelcomeMessage(author, cfg)
 	if err != nil {
 		return err
 	}
 
-	return bot.cli.CreateIssueComment(org, repo, number, comment)
+	return bot.cli.CreateIssueComment(org, repo, e.GetIssueNumber(), comment)
 }
 
 func (bot robot) genWelcomeMessage(author string, cfg *botConfig) (string, error) {
@@ -99,5 +96,6 @@ func (bot robot) genWelcomeMessage(author string, cfg *botConfig) (string, error
 	if err != nil {
 		return "", err
 	}
+
 	return fmt.Sprintf(welcomeMessage, author, cfg.CommunityName, cfg.CommunityName, b.Login, cfg.CommandLink), nil
 }
