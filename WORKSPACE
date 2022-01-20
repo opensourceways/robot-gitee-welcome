@@ -911,6 +911,6 @@ go_repository(
 go_repository(
     name = "com_github_opensourceways_go_gitee",
     importpath = "github.com/opensourceways/go-gitee",
-    sum = "h1:iVRo+1ZmLYfDA6beHuDoJeteGtDqzUIbXN5EdQ9z0Bo=",
-    version = "v0.0.0-20220118023153-0c41490fb43b",
+    sum = "h1:L9QeiOlWyPcQTdNynF9L3zL6Yeq/+4L43cyO3vPROQE=",
+    version = "v0.0.0-20220120022149-6d34985edf4f",
 )
